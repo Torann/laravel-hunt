@@ -132,6 +132,7 @@ class Hunter
                     '_index' => $this->getIndexName(),
                     '_type' => $this->getModelIndexName($model),
                     '_id' => $model->getKey(),
+                    '_retry_on_conflict' => 3,
                 ],
             ]);
 
@@ -201,7 +202,7 @@ class Hunter
      *
      * @param string $term
      * @param int    $perPage
-     * @param array $options
+     * @param array  $options
      *
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
@@ -226,7 +227,7 @@ class Hunter
      * Perform the given search.
      *
      * @param string $term
-     * @param array    $options
+     * @param array  $options
      *
      * @return Collection
      */
@@ -284,7 +285,7 @@ class Hunter
     protected function paginateResults(array $result, $page, $perPage, array $append = [])
     {
         // Get total number of pages
-        $total = (int)ceil($result['hits']['total'] / $perPage);
+        $total = $result['hits']['total'];
 
         // Create pagination instance
         $paginator = (new LengthAwarePaginator($this->hydrateResults($result), $total, $perPage, $page, [
@@ -376,7 +377,7 @@ class Hunter
      * Get Elasticsearch search term params.
      *
      * @param string $term
-     * @param array $options
+     * @param array  $options
      *
      * @return array
      */
@@ -395,7 +396,7 @@ class Hunter
 
         // Add fields to search
         if (empty($fields) === false) {
-            $params['body']['query']['bool']['must'] = [
+            $params['body']['query']['bool']['must'][] = [
                 'multi_match' => [
                     'query' => $term,
                     'fields' => $fields,
@@ -403,7 +404,18 @@ class Hunter
             ];
         }
         else {
-            $params['body']['query']['match']['_all'] = $term;
+            $params['body']['query']['match']['_all'][] = $term;
+        }
+
+        // Check for must filters
+        if ($filter_musts = Arr::get($options, 'filter_musts')) {
+            foreach(array_filter($filter_musts) as $filter=>$value) {
+                $params['body']['filter']['bool']['must'][] = [
+                    'term' => [
+                        $filter => $value,
+                    ],
+                ];
+            }
         }
 
         return $params;
