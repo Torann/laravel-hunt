@@ -36,6 +36,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Multilingual Support
+    |--------------------------------------------------------------------------
+    |
+    | Use this to set the global locale field used in your models. When set
+    | Laravel Hunt will only perform searches in the current system locale.
+    |
+    | 'locale_field' => 'locale',
+    |
+    */
+
+    'locale_field' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Unified Types
     |--------------------------------------------------------------------------
     |

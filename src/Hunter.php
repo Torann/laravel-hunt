@@ -28,6 +28,13 @@ class Hunter
     protected $elasticsearch;
 
     /**
+     * Ignore the set locale field.
+     *
+     * @var bool
+     */
+    protected $ignore_locale = true;
+
+    /**
      * Create a Hunter instance.
      *
      * @param array $config
@@ -35,6 +42,7 @@ class Hunter
     public function __construct(array $config = [])
     {
         $this->config = $config;
+        $this->ignore_locale = !$this->config('locale_field');
 
         $this->elasticsearch = ClientBuilder::fromConfig($this->config('config'));
     }
@@ -374,6 +382,16 @@ class Hunter
     }
 
     /**
+     * Set the ignore locale option.
+     *
+     * @param bool $val
+     */
+    public function ignoreLocale($val)
+    {
+        $this->ignore_locale = $val;
+    }
+
+    /**
      * Get Elasticsearch search term params.
      *
      * @param string $term
@@ -407,6 +425,13 @@ class Hunter
             $params['body']['query']['match']['_all'][] = $term;
         }
 
+        // Include the locale field
+        if ($this->ignore_locale === false && ($locale_field = $this->config('locale_field'))) {
+            if (Arr::get($options, 'filter_musts.' . $locale_field) === null) {
+                $options['filter_musts'][$locale_field] = config('app.locale');
+            }
+        }
+
         // Check for must filters
         if ($filter_musts = Arr::get($options, 'filter_musts')) {
             foreach(array_filter($filter_musts) as $filter=>$value) {
@@ -417,7 +442,7 @@ class Hunter
                 ];
             }
         }
-
+dd($params);
         return $params;
     }
 
