@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Collection;
 class Builder
 {
     /**
+     * Search options.
+     *
+     * @var array
+     */
+    public $options = [];
+
+    /**
      * The model instance.
      *
      * @var \Illuminate\Database\Eloquent\Model
@@ -32,11 +39,13 @@ class Builder
      *
      * @param \Illuminate\Database\Eloquent\Model $model
      * @param string                              $query
+     * @param array                               $options
      */
-    public function __construct($model, $query)
+    public function __construct($model, $query, array $options = [])
     {
         $this->model = $model;
         $this->query = $query;
+        $this->options = $options;
     }
 
     /**
@@ -87,9 +96,12 @@ class Builder
     {
         $perPage = $perPage ?: $this->model->getPerPage();
 
-        return $this->hunter()->search($this->query, $perPage, [
+        // Search options
+        $options = array_merge($this->options, [
             'types' => $this->model,
         ]);
+
+        return $this->hunter()->search($this->query, $perPage, $options);
     }
 
     /**
