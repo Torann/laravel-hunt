@@ -2,8 +2,6 @@
 
 namespace LaravelHunt\Console;
 
-use Illuminate\Database\Eloquent\Model;
-
 class ImportCommand extends AbstractCommand
 {
     /**
@@ -12,7 +10,8 @@ class ImportCommand extends AbstractCommand
      * @var string
      */
     protected $signature = 'hunt:import
-                                {model : Name or comma separated names of the model(s) to index}';
+                                {model : Name or comma separated names of the model(s) to index}
+                                {--l|locales= : Single or comma separated locales to index}';
 
     /**
      * The console command description.
@@ -28,9 +27,18 @@ class ImportCommand extends AbstractCommand
      */
     public function handle()
     {
+        $locales = $this->getLocaleOption();
+
         foreach ($this->getModelArgument() as $model) {
             if ($model = $this->validateModel($model)) {
-                $this->index($model);
+                if (empty($locales) === false) {
+                    foreach ($locales as $locale) {
+                        $this->index($model, $locale);
+                    }
+                }
+                else {
+                    $this->index($model);
+                }
             }
         }
     }
@@ -39,10 +47,11 @@ class ImportCommand extends AbstractCommand
      * Index all model entries to ElasticSearch.
      *
      * @param string $model
+     * @param string $locale
      *
      * @return bool
      */
-    protected function index($model)
+    protected function index($model, $locale = '')
     {
         $this->comment("Processing [{$model}]");
 
@@ -53,6 +62,11 @@ class ImportCommand extends AbstractCommand
         if ($this->hunter->typeExists($instance) === false) {
             $this->line(' - Mapping');
             $this->hunter->putMapping($instance);
+        }
+
+        // Get entries by a specific locale
+        if ($locale && ($field = $this->hunter->config('locale_field'))) {
+            $instance->where($field, $locale);
         }
 
         // Index model

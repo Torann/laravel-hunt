@@ -61,6 +61,16 @@ abstract class AbstractCommand extends Command
     }
 
     /**
+     * Get locale option.
+     *
+     * @return array
+     */
+    protected function getLocaleOption()
+    {
+        return array_filter(explode(',', preg_replace('/\s+/', '', $this->option('locales'))));
+    }
+
+    /**
      * Validate model.
      *
      * @param  string $model
