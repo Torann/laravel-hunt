@@ -405,24 +405,26 @@ class Hunter
         $params = $this->getBasicParams($options);
 
         // Get fields option
-        $fields = Arr::get($options, 'field');
+        $fields = Arr::get($options, 'fields');
 
         // Check for user specified fields or use default
-        if (is_string($fields) === false) {
+        if (empty($fields) === true) {
             $fields = $this->config('fields');
         }
 
-        // Add fields to search
-        if (empty($fields) === false) {
-            $params['body']['query']['bool']['must'][] = [
-                'multi_match' => [
-                    'query' => $term,
-                    'fields' => $fields,
-                ],
-            ];
-        }
-        else {
-            $params['body']['query']['match']['_all'][] = $term;
+        // Add text query if one was entered
+        if ($term) {
+            if (empty($fields) === false) {
+                $params['body']['query']['bool']['must'][] = [
+                    'multi_match' => [
+                        'query' => $term,
+                        'fields' => $fields,
+                    ],
+                ];
+            }
+            else {
+                $params['body']['query']['match']['_all'][] = $term;
+            }
         }
 
         // Include the locale field
