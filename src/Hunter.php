@@ -442,7 +442,7 @@ class Hunter
                 ];
             }
         }
-dd($params);
+
         return $params;
     }
 
