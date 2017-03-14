@@ -11,7 +11,7 @@ Unified search for Laravel models using Elasticsearch. Laravel Hunt uses the [of
 
 # Elasticsearch Requirements
 
-You must be running Elasticsearch 1.0 or higher.
+You must be running Elasticsearch 5.0 or higher.
 
 ## Installation
 
@@ -107,14 +107,13 @@ Create the Elasticsearch index.
 
 Remove the Elasticsearch index.
 
-#### `hunt:map <action> <model>`
+#### `hunt:map <model>`
 
-Initialize an Eloquent model.
+Initialize an Eloquent model map.
 
 Arguments:
 
 ```
- action              Mapping action to perform (add or remove)
  model               Name or comma separated names of the model(s) to initialize
 ```
 
@@ -216,8 +215,10 @@ Once you have retrieved the results, you may display the results and render the 
 {{ $posts->links() }}
 ```
 
-## Change Log
+## Multilingual
 
-#### v0.1.0
+> This feature is experimental
 
-- First release
+Laravel Hunt can support multiple languages by appending the language code to the index type, so when the system performs a search it will only look for data that is on in the current system locale suffixed index type. For this to work the model needs to use the `LaravelHunt\Localized` trait or something similar to it and model needs to have the filed `locale`.
+
+For more information see the config file for more details.

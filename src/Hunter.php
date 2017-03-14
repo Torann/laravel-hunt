@@ -28,11 +28,11 @@ class Hunter
     protected $elasticsearch;
 
     /**
-     * Ignore the set locale field.
+     * Multilingual support.
      *
      * @var bool
      */
-    protected $ignore_locale = true;
+    protected $multilingual = false;
 
     /**
      * Create a Hunter instance.
@@ -42,7 +42,7 @@ class Hunter
     public function __construct(array $config = [])
     {
         $this->config = $config;
-        $this->ignore_locale = !$this->config('locale_field');
+        $this->multilingual = $this->config('multilingual', false);
 
         $this->elasticsearch = ClientBuilder::fromConfig($this->config('config'));
     }
@@ -99,20 +99,6 @@ class Hunter
     }
 
     /**
-     * Delete mapping.
-     *
-     * @param mixed $model
-     *
-     * @return array
-     */
-    public function deleteMapping($model)
-    {
-        $model = $model instanceof Model ? $model : new $model;
-
-        return $this->client()->indices()->deleteMapping($this->getModelParams($model));
-    }
-
-    /**
      * Add/Update the given models in the index.
      *
      * @param mixed $models
@@ -131,14 +117,15 @@ class Hunter
         $models->each(function ($model) use ($body) {
             $array = $this->getModelDocumentData($model);
 
+            // Skip empties
             if (empty($array)) {
-                return;
+                return null;
             }
 
             $body->push([
                 'index' => [
                     '_index' => $this->getIndexName(),
-                    '_type' => $this->getModelIndexName($model),
+                    '_type' => $this->getModelIndexName($model, $model->locale),
                     '_id' => $model->getKey(),
                     '_retry_on_conflict' => 3,
                 ],
@@ -173,7 +160,7 @@ class Hunter
             $body->push([
                 'delete' => [
                     '_index' => $this->getIndexName(),
-                    '_type' => $this->getModelIndexName($model),
+                    '_type' => $this->getModelIndexName($model, $model->locale),
                     '_id' => $model->getKey(),
                 ],
             ]);
@@ -190,17 +177,17 @@ class Hunter
      *
      * @param string $term
      * @param int    $perPage
-     * @param bool   $group
+     * @param array  $options
      *
      * @return LengthAwarePaginator|array
      */
-    public function quickSearch($term, $perPage = 10, $group = false)
+    public function quickSearch($term, $perPage = 10, array $options = [])
     {
-        $results = $this->performSearch($term, [
+        $results = $this->performSearch($term, array_merge([
             'size' => $perPage,
-        ]);
+        ], $options));
 
-        return $group
+        return Arr::get($options, 'group', false)
             ? $this->groupResults($results)
             : $results;
     }
@@ -373,6 +360,13 @@ class Hunter
             $types = $this->getModelIndexName($types);
         }
 
+        // Add the locale suffix to types
+        else if ($this->multilingual && $types[0] !== '_') {
+            $types = implode(',', array_map(function($type) {
+                return $type . $this->getMultilingualSuffix();
+            }, explode(',', $types)));
+        }
+
         return array_filter([
             'index' => $this->getIndexName(),
             'type' => preg_replace('/\s+/', '', $types),
@@ -424,13 +418,6 @@ class Hunter
             }
             else {
                 $params['body']['query']['match']['_all'][] = $term;
-            }
-        }
-
-        // Include the locale field
-        if ($this->ignore_locale === false && ($locale_field = $this->config('locale_field'))) {
-            if (Arr::get($options, 'filter_musts.' . $locale_field) === null) {
-                $options['filter_musts'][$locale_field] = config('app.locale');
             }
         }
 
@@ -570,17 +557,37 @@ class Hunter
     /**
      * Get the index name for the model.
      *
-     * @param Model $model
+     * @param Model  $model
+     * @param string $locale
      *
      * @return array
      */
-    protected function getModelIndexName(Model $model)
+    protected function getModelIndexName(Model $model, $locale = null)
     {
+        // Get the locale suffix
+        $locale = $this->getMultilingualSuffix($locale);
+
         if (method_exists($model, 'searchableAs') === true) {
-            return $model->searchableAs();
+            return $model->searchableAs() . $locale;
         }
 
-        return $model->getHunterIndex();
+        return $model->getHunterIndex() . $locale;
+    }
+
+    /**
+     * If enabled, return the multilingual suffix.
+     *
+     * @param string $locale
+     *
+     * @return string
+     */
+    protected function getMultilingualSuffix($locale = null)
+    {
+        $locale = $locale ?: app()->getLocale();
+
+        return $this->multilingual
+            ? '_' . $locale
+            : '';
     }
 
     /**

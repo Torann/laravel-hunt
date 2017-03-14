@@ -12,7 +12,8 @@ class FlushCommand extends AbstractCommand
      * @var string
      */
     protected $signature = 'hunt:flush
-                                {model : Name or comma separated names of the model(s) to index}';
+                                {model : Name or comma separated names of the model(s) to index}
+                                {--l|locales= : Single or comma separated locales to index}';
 
     /**
      * The console command description.
@@ -28,10 +29,15 @@ class FlushCommand extends AbstractCommand
      */
     public function handle()
     {
-        foreach ($this->getModelArgument() as $model) {
-            if ($model = $this->validateModel($model)) {
-                $this->flush($model);
+        if (empty($locales = $this->getLocales()) === false) {
+            foreach ($locales as $locale) {
+                $this->setSystemLocale($locale);
+
+                $this->processModels('flush');
             }
+        }
+        else {
+            $this->processModels('flush');
         }
     }
 

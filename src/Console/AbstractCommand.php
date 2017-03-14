@@ -5,6 +5,7 @@ namespace LaravelHunt\Console;
 use LaravelHunt\Hunter;
 use Illuminate\Support\Str;
 use Illuminate\Console\Command;
+use Torann\Localization\LocaleManager;
 
 abstract class AbstractCommand extends Command
 {
@@ -12,6 +13,13 @@ abstract class AbstractCommand extends Command
      * @var \LaravelHunt\Hunter
      */
     protected $hunter;
+
+    /**
+     * Namespace for models.
+     *
+     * @var string
+     */
+    protected $models;
 
     /**
      * Create a new console command instance.
@@ -23,6 +31,21 @@ abstract class AbstractCommand extends Command
         parent::__construct();
 
         $this->hunter = $hunter;
+        $this->models = config('hunt.model_namespace', '\\App\\');
+    }
+
+    /**
+     * Perform action model mapping.
+     *
+     * @param string $action
+     */
+    protected function processModels($action)
+    {
+        foreach ($this->getModelArgument() as $model) {
+            if ($model = $this->validateModel("{$this->models}{$model}")) {
+                $this->$action($model);
+            }
+        }
     }
 
     /**
@@ -61,13 +84,41 @@ abstract class AbstractCommand extends Command
     }
 
     /**
-     * Get locale option.
+     * Get an array of supported locales.
      *
-     * @return array
+     * @return array|null
      */
-    protected function getLocaleOption()
+    protected function getLocales()
     {
-        return array_filter(explode(',', preg_replace('/\s+/', '', $this->option('locales'))));
+        // Get user specified locales
+        if ($locales = $this->option('locales')) {
+            return array_filter(explode(',', preg_replace('/\s+/', '', $locales)));
+        }
+
+        // Check for package
+        if (class_exists('Torann\\Localization\\LocaleManager')) {
+            return app(LocaleManager::class)->getSupportedLanguagesKeys();
+        }
+
+        return config('hunt.support_locales');
+    }
+
+    /**
+     * Get an array of supported locales.
+     *
+     * @param string $locale
+     */
+    protected function setSystemLocale($locale)
+    {
+        $this->line('');
+        $this->line("System local set to: <info>{$locale}</info>");
+
+        if (class_exists('Torann\\Localization\\LocaleManager')) {
+            app(LocaleManager::class)->setLocale($locale);
+        }
+        else {
+            app()->setLocale($locale);
+        }
     }
 
     /**
@@ -78,9 +129,6 @@ abstract class AbstractCommand extends Command
      */
     protected function validateModel($model)
     {
-        // Determine the namespace
-        $model = ($model[0] !== '\\') ? "\\App\\{$model}" : $model;
-
         // Verify model existence
         if (class_exists($model) === false) {
             $this->error("Model [{$model}] not found");

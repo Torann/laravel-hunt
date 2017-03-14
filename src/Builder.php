@@ -2,8 +2,6 @@
 
 namespace LaravelHunt;
 
-use Illuminate\Database\Eloquent\Collection;
-
 class Builder
 {
     /**

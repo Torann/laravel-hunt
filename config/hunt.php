@@ -36,20 +36,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Multilingual Support
-    |--------------------------------------------------------------------------
-    |
-    | Use this to set the global locale field used in your models. When set
-    | Laravel Hunt will only perform searches in the current system locale.
-    |
-    | 'locale_field' => 'locale',
-    |
-    */
-
-    'locale_field' => null,
-
-    /*
-    |--------------------------------------------------------------------------
     | Unified Types
     |--------------------------------------------------------------------------
     |
@@ -106,4 +92,42 @@ return [
     */
 
     'settings' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Model Namespace
+    |--------------------------------------------------------------------------
+    |
+    | Change this if you use a different model namespace for Laravel.
+    |
+    */
+
+    'model_namespace' => '\\App\\',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multilingual Support
+    |--------------------------------------------------------------------------
+    |
+    | Use this to set support for multiple languages. Basically it suffixes
+    | the type with the locale code.
+    |
+    | For this to work, the model will need to use the `Localized` trait. Or
+    | something similar.
+    |
+    */
+
+    'multilingual' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support Locales
+    |--------------------------------------------------------------------------
+    |
+    | This is used in the command line to import and map models. If using the
+    | package ``
+    |
+    */
+
+    'support_locales' => [],
 ];

@@ -27,19 +27,15 @@ class ImportCommand extends AbstractCommand
      */
     public function handle()
     {
-        $locales = $this->getLocaleOption();
+        if (empty($locales = $this->getLocales()) === false) {
+            foreach ($locales as $locale) {
+                $this->setSystemLocale($locale);
 
-        foreach ($this->getModelArgument() as $model) {
-            if ($model = $this->validateModel($model)) {
-                if (empty($locales) === false) {
-                    foreach ($locales as $locale) {
-                        $this->index($model, $locale);
-                    }
-                }
-                else {
-                    $this->index($model);
-                }
+                $this->processModels('index');
             }
+        }
+        else {
+            $this->processModels('index');
         }
     }
 
@@ -47,11 +43,10 @@ class ImportCommand extends AbstractCommand
      * Index all model entries to ElasticSearch.
      *
      * @param string $model
-     * @param string $locale
      *
      * @return bool
      */
-    protected function index($model, $locale = '')
+    protected function index($model)
     {
         $this->comment("Processing [{$model}]");
 
@@ -62,11 +57,6 @@ class ImportCommand extends AbstractCommand
         if ($this->hunter->typeExists($instance) === false) {
             $this->line(' - Mapping');
             $this->hunter->putMapping($instance);
-        }
-
-        // Get entries by a specific locale
-        if ($locale && ($field = $this->hunter->config('locale_field'))) {
-            $instance->where($field, $locale);
         }
 
         // Index model
