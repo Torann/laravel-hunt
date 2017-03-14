@@ -10,8 +10,8 @@ class MapCommand extends AbstractCommand
      * @var string
      */
     protected $signature = 'hunt:map
-                                {action : Mapping action to perform (add or remove)}
-                                {model : Name or comma separated names of the model(s) to initialize}';
+                                {model : Name or comma separated names of the model(s) to initialize}
+                                {--l|locales= : Single or comma separated locales}';
 
     /**
      * The console command description.
@@ -25,12 +25,16 @@ class MapCommand extends AbstractCommand
      */
     public function handle()
     {
-        $action = $this->getActionArgument(['add', 'remove']);
+        // Process any locales
+        if (empty($locales = $this->getLocales()) === false) {
+            foreach ($locales as $locale) {
+                $this->setSystemLocale($locale);
 
-        foreach ($this->getModelArgument() as $model) {
-            if ($model = $this->validateModel("\\App\\{$model}")) {
-                $this->$action($model);
+                $this->processModels('add');
             }
+        }
+        else {
+            $this->processModels('add');
         }
     }
 
@@ -38,8 +42,6 @@ class MapCommand extends AbstractCommand
      * Add ElasticSearch model mapping.
      *
      * @param string $model
-     *
-     * @return bool
      */
     protected function add($model)
     {
@@ -50,26 +52,6 @@ class MapCommand extends AbstractCommand
         $this->output->write("Mapping [{$model}]...");
 
         $this->hunter->putMapping($model);
-
-        $this->output->writeln("<info>success</info>");
-    }
-
-    /**
-     * Remove ElasticSearch model mapping.
-     *
-     * @param  string $model
-     *
-     * @return bool
-     */
-    protected function remove($model)
-    {
-        if ($this->hunter->typeExists($model) === false) {
-            return $this->error("[{$model}] not mapped");
-        }
-
-        $this->output->write("Removing [{$model}] map...");
-
-        $this->hunter->deleteMapping($model);
 
         $this->output->writeln("<info>success</info>");
     }
