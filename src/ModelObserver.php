@@ -5,23 +5,13 @@ namespace LaravelHunt;
 class ModelObserver
 {
     /**
-     * Handle the created event for the model.
+     * Handle the saved event for the model.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
      */
-    public function created($model)
+    public function saved($model)
     {
         $model->addToHunt();
-    }
-
-    /**
-     * Handle the updated event for the model.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     */
-    public function updated($model)
-    {
-        $this->created($model);
     }
 
     /**
@@ -41,6 +31,6 @@ class ModelObserver
      */
     public function restored($model)
     {
-        $this->created($model);
+        $this->saved($model);
     }
 }
