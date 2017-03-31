@@ -77,10 +77,13 @@ class Builder
      */
     public function get()
     {
-        return $this->hunter()->performSearch($this->query, [
+        // Search options
+        $options = array_merge($this->options, [
             'size' => $this->limit,
             'types' => $this->model,
         ]);
+
+        return $this->hunter()->performSearch($this->query, $options);
     }
 
     /**
