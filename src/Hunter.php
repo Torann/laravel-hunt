@@ -423,12 +423,12 @@ class Hunter
 
         // Check for must filters
         if ($filter_musts = Arr::get($options, 'filter_musts')) {
-            foreach(array_filter($filter_musts) as $filter=>$value) {
+            foreach($filter_musts as $filter=>$value) {
 
                 // TODO: This sucks...fix it. Version 2 made it so that
                 //       all tags had to be present, not just some of them
                 if (is_array($value)) {
-                    foreach($value as $k=>$v) {
+                    foreach(array_filter($value) as $k=>$v) {
                         $params['body']['query']['bool']['must'][] = [
                             'term' => [
                                 $filter => $v,
@@ -436,7 +436,7 @@ class Hunter
                         ];
                     }
                 }
-                else {
+                else if($value !== '') {
                     $params['body']['query']['bool']['must'][] = [
                         'term' => [
                             $filter => $value,
