@@ -26,7 +26,7 @@ class LocalizedScope implements Scope
      */
     public function extend(Builder $builder)
     {
-        $this->addWithoutModerated($builder);
+        $this->addWithoutLocalization($builder);
     }
 
     /**
@@ -34,15 +34,10 @@ class LocalizedScope implements Scope
      *
      * @param \Illuminate\Database\Eloquent\Builder  $builder
      */
-    protected function addWithoutModerated(Builder $builder)
+    protected function addWithoutLocalization(Builder $builder)
     {
         $builder->macro('withoutLocalization', function (Builder $builder) {
-            $model = $builder->getModel();
-
-            $builder->withoutGlobalScope($this)
-                ->where($model->getTable() . '.moderated', '=', false);
-
-            return $builder;
+            return $builder->withoutGlobalScope($this);
         });
     }
 }
