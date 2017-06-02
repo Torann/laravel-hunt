@@ -21,25 +21,27 @@ return [
         ],
 
         'retries' => 1,
+
+        'handler' => null,
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Amazon Elasticsearch Service
+    | Handlers
     |--------------------------------------------------------------------------
     |
-    | Sign all requests made to AWS by simply setting up the config with your
-    | AWS settings like the following.
-    |
-    | 'aws_config' => [
-    |    'key' => env('AWS_KEY'),
-    |    'secret' => env('AWS_SECRET'),
-    |    'region' => env('AWS_REGION'),
-    | ],
+    | Use this to handle certain aspects of a Elasticsearch request.
     |
     */
 
-    'aws_config' => null,
+    'handlers' => [
+        'aws' => [
+            'class' => \LaravelHunt\Handlers\AwsSignature::class,
+            'key' => env('AWS_KEY'),
+            'secret' => env('AWS_SECRET'),
+            'region' => env('AWS_REGION', 'us-east-1'),
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

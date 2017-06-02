@@ -45,12 +45,7 @@ class Hunter
         $this->config = $config;
         $this->multilingual = $this->config('multilingual', false);
 
-        // AWS Elasticsearch enabled
-        if ($aws = $this->config('aws_config', null)) {
-            $this->config['config']['handler'] = new AwsSignature($aws);
-        }
-
-        $this->elasticsearch = ClientBuilder::fromConfig($this->config('config'));
+        $this->elasticsearch = ClientBuilder::fromConfig($this->getElasticSearchConfig());
     }
 
     /**
@@ -645,5 +640,31 @@ class Hunter
     public function getIndexName()
     {
         return $this->config('index', 'default');
+    }
+
+    /**
+     * Get Elasticsearch settings.
+     *
+     * @return array
+     */
+    protected function getElasticSearchConfig()
+    {
+        // Get all settings
+        $settings = $this->config('config');
+
+        // Get a handler if one is set
+        if ($config = $this->config('handlers.' . $this->config('config.handler'), null)) {
+
+            // Get handler class
+            $handler = Arr::pull($config, 'class');
+
+            // Create handler instance
+            $settings['handler'] = new $handler($config);
+        }
+        else {
+            unset($settings['handler']);
+        }
+
+        return $settings;
     }
 }
