@@ -7,6 +7,7 @@ use Illuminate\Support\Arr;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
+use LaravelHunt\Handlers\AwsSignature;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -43,6 +44,11 @@ class Hunter
     {
         $this->config = $config;
         $this->multilingual = $this->config('multilingual', false);
+
+        // AWS Elasticsearch enabled
+        if ($aws = $this->config('aws_config', null)) {
+            $this->config['config']['handler'] = new AwsSignature($aws);
+        }
 
         $this->elasticsearch = ClientBuilder::fromConfig($this->config('config'));
     }
